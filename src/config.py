@@ -3,8 +3,8 @@ config_pre_processing = {
     'lowercase': True,
     'normalize_unicode': True,
     'normalization': 'lemmatization',  # escolha entre: 'lemmatization' | 'stemming' | None
-    'remove_noise': True,
-    'remove_stopwords': True
+    'remove_noise': False,
+    'remove_stopwords': False
 }
 
 # Configuração de vetorização 
@@ -27,3 +27,25 @@ config_vectorizer = {
     # Parâmetros Word2Vec
     'w2v_vector_size': 100
 }
+
+# Configuração do pipeline
+# steps: ordem de execução das etapas — altere a lista para controlar o fluxo
+# Etapas disponíveis: 'pre_processing' | 'vectorization' | 'classification'
+config_pipeline = {
+    'input_path':  '../data/NPS_COMENTÁRIOS.xlsx',
+    'output_path': '../data/NPS_RESULTADO.xlsx',
+    'steps': ['pre_processing', 'vectorization', 'classification'],
+}
+
+# Configuração do classificador
+# model: 'multinomial_nb' | 'bernoulli_nb' | 'logistic_regression' | 'linear_svc' | 'random_forest' | 'lightgbm'
+# params: hiperparâmetros explícitos passados diretamente ao construtor do modelo
+config_classifier = {
+    'model': 'logistic_regression',
+    'params': {
+        'C': 1.0,
+        'max_iter': 1000,
+        'solver': 'lbfgs',
+    }
+}
+

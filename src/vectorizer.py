@@ -1,10 +1,7 @@
-import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from gensim.models import Word2Vec
-import config
-
 class TextVectorizer:
     
     def __init__(self, config: dict):
@@ -71,10 +68,3 @@ class TextVectorizer:
         
         return []
 
-# Uso
-df = pd.read_excel('../data/NPS_COMENTA_RIOS_PROCESSADO.xlsx')
-
-vectorizer = TextVectorizer(config.config_vectorizer)
-df['vetor'] = vectorizer.fit_transform(df['texto_processado'].tolist())
-
-df.to_excel('../data/NPS_COMENTA_RIOS_VETORIZADO.xlsx', index=False)

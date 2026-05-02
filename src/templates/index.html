@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline NLP</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container { width: 100%; max-width: 720px; }
+
+    h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 2rem; letter-spacing: -0.3px; }
+
+    section {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    section h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .row:last-child { margin-bottom: 0; }
+
+    .field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 140px; }
+    .field label { font-size: 0.8rem; color: #555; }
+
+    select, input[type="number"], input[type="text"] {
+      height: 34px;
+      border: 1px solid #d5d5d5;
+      border-radius: 5px;
+      padding: 0 0.6rem;
+      font-size: 0.85rem;
+      background: #fafafa;
+      color: #1a1a1a;
+      outline: none;
+      width: 100%;
+    }
+    select:focus, input:focus { border-color: #555; background: #fff; }
+
+    .toggle-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .toggle { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; }
+    .toggle input { width: 15px; height: 15px; cursor: pointer; accent-color: #1a1a1a; }
+
+    /* file upload */
+    .upload-area {
+      border: 2px dashed #d5d5d5;
+      border-radius: 6px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+    .upload-area:hover, .upload-area.drag { border-color: #888; }
+    .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .upload-area p { font-size: 0.85rem; color: #888; pointer-events: none; }
+    .upload-area p strong { color: #1a1a1a; }
+    #file-name { font-size: 0.8rem; color: #555; margin-top: 0.5rem; }
+
+    /* steps */
+    .steps-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .step-btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid #d5d5d5;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s;
+      background: #fafafa;
+    }
+    .step-btn input { display: none; }
+    .step-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+    /* dynamic panels */
+    .panel { display: none; }
+    .panel.visible { display: block; }
+
+    /* run */
+    #run-btn {
+      width: 100%;
+      height: 42px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.15s;
+    }
+    #run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* results */
+    #results {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    #results h2 { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #888; margin-bottom: 1rem; }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.2rem; }
+    .metric { text-align: center; }
+    .metric .val { font-size: 1.5rem; font-weight: 600; }
+    .metric .lbl { font-size: 0.72rem; color: #888; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    #download-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      background: #f0f0f0;
+      border: 1px solid #d5d5d5;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: #1a1a1a;
+      transition: background 0.12s;
+    }
+    #download-btn:hover { background: #e4e4e4; }
+
+    #error-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      display: none;
+    }
+
+    #spinner {
+      display: none;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #888;
+      margin-top: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Pipeline NLP</h1>
+
+  <!-- Upload -->
+  <section>
+    <h2>Arquivo</h2>
+    <div class="upload-area" id="upload-area">
+      <input type="file" id="file-input" accept=".xlsx,.xls" />
+      <p>Arraste ou <strong>clique</strong> para selecionar uma planilha</p>
+      <div id="file-name"></div>
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section>
+    <h2>Etapas do pipeline</h2>
+    <div class="steps-row">
+      <label class="step-btn active" id="lbl-pre_processing">
+        <input type="checkbox" name="pre_processing" checked /> Pré-processamento
+      </label>
+      <label class="step-btn active" id="lbl-vectorization">
+        <input type="checkbox" name="vectorization" checked /> Vetorização
+      </label>
+      <label class="step-btn active" id="lbl-classification">
+        <input type="checkbox" name="classification" checked /> Classificação
+      </label>
+    </div>
+  </section>
+
+  <!-- Pre-processing config -->
+  <section id="sec-pre_processing">
+    <h2>Pré-processamento</h2>
+    <div class="row">
+      <div class="field">
+        <label>Normalização</label>
+        <select name="normalization">
+          <option value="lemmatization">Lematização</option>
+          <option value="stemming">Stemming</option>
+          <option value="none">Nenhuma</option>
+        </select>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <label class="toggle"><input type="checkbox" name="lowercase" value="true" checked /> Minúsculas</label>
+      <label class="toggle"><input type="checkbox" name="normalize_unicode" value="true" checked /> Normalizar unicode</label>
+      <label class="toggle"><input type="checkbox" name="remove_noise" value="true" /> Remover ruído</label>
+      <label class="toggle"><input type="checkbox" name="remove_stopwords" value="true" /> Remover stopwords</label>
+    </div>
+  </section>
+
+  <!-- Vectorizer config -->
+  <section id="sec-vectorization">
+    <h2>Vetorização</h2>
+    <div class="row">
+      <div class="field">
+        <label>Estratégia</label>
+        <select name="strategy" id="strategy-select">
+          <option value="tfidf_svd">TF-IDF + SVD</option>
+          <option value="tfidf">TF-IDF</option>
+          <option value="bow">BoW</option>
+          <option value="word2vec">Word2Vec</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- BoW -->
+    <div class="panel" id="panel-bow">
+      <div class="row">
+        <div class="field">
+          <label>Max features</label>
+          <input type="number" name="bow_max_features" value="100" min="1" />
+        </div>
+        <div class="field" style="justify-content:flex-end; padding-top:1.4rem;">
+          <label class="toggle"><input type="checkbox" name="bow_binary" value="true" /> Binário</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- TF-IDF -->
+    <div class="panel" id="panel-tfidf">
+      <div class="row">
+        <div class="field">
+          <label>Max features</label>
+          <input type="number" name="tfidf_max_features" value="100" min="1" />
+        </div>
+        <div class="field">
+          <label>N-gram max</label>
+          <select name="tfidf_ngram_max">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Norma</label>
+          <select name="tfidf_norm">
+            <option value="l2" selected>L2</option>
+            <option value="l1">L1</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" name="tfidf_sublinear_tf" value="true" checked /> Sublinear TF</label>
+      </div>
+    </div>
+
+    <!-- TF-IDF + SVD -->
+    <div class="panel visible" id="panel-tfidf_svd">
+      <div class="row">
+        <div class="field">
+          <label>Max features (TF-IDF)</label>
+          <input type="number" name="tfidf_max_features" value="100" min="1" />
+        </div>
+        <div class="field">
+          <label>Componentes SVD</label>
+          <select name="svd_n_components">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="300">300</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>N-gram max</label>
+          <select name="tfidf_ngram_max">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" name="tfidf_sublinear_tf" value="true" checked /> Sublinear TF</label>
+      </div>
+    </div>
+
+    <!-- Word2Vec -->
+    <div class="panel" id="panel-word2vec">
+      <div class="row">
+        <div class="field">
+          <label>Tamanho do vetor</label>
+          <input type="number" name="w2v_vector_size" value="100" min="10" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Classifier config -->
+  <section id="sec-classification">
+    <h2>Classificador</h2>
+    <div class="row">
+      <div class="field">
+        <label>Modelo</label>
+        <select name="model" id="model-select">
+          <option value="logistic_regression">Regressão Logística</option>
+          <option value="linear_svc">Linear SVC</option>
+          <option value="random_forest">Random Forest</option>
+          <option value="multinomial_nb">Naive Bayes Multinomial</option>
+          <option value="bernoulli_nb">Naive Bayes Bernoulli</option>
+          <option value="lightgbm">LightGBM</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LR params -->
+    <div class="panel visible" id="panel-logistic_regression">
+      <div class="row">
+        <div class="field">
+          <label>C (regularização)</label>
+          <input type="number" name="lr_C" value="1.0" min="0.01" step="0.1" />
+        </div>
+        <div class="field">
+          <label>Max iter</label>
+          <input type="number" name="lr_max_iter" value="1000" min="100" step="100" />
+        </div>
+        <div class="field">
+          <label>Solver</label>
+          <select name="lr_solver">
+            <option value="lbfgs" selected>lbfgs</option>
+            <option value="saga">saga</option>
+            <option value="liblinear">liblinear</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <button id="run-btn">Executar pipeline</button>
+  <div id="spinner">Processando...</div>
+
+  <div id="error-box"></div>
+
+  <div id="results">
+    <h2>Resultado</h2>
+    <div class="metrics-grid" id="metrics-grid"></div>
+    <a id="download-btn">↓ Baixar resultado.xlsx</a>
+  </div>
+</div>
+
+<script>
+  // File upload
+  const fileInput = document.getElementById('file-input');
+  const uploadArea = document.getElementById('upload-area');
+  const fileNameEl = document.getElementById('file-name');
+
+  fileInput.addEventListener('change', () => {
+    fileNameEl.textContent = fileInput.files[0]?.name ?? '';
+  });
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault(); uploadArea.classList.remove('drag');
+    fileInput.files = e.dataTransfer.files;
+    fileNameEl.textContent = fileInput.files[0]?.name ?? '';
+  });
+
+  // Step toggles
+  document.querySelectorAll('.step-btn input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const lbl = cb.closest('.step-btn');
+      const name = cb.name;
+      lbl.classList.toggle('active', cb.checked);
+      const sec = document.getElementById('sec-' + name);
+      if (sec) sec.style.display = cb.checked ? '' : 'none';
+    });
+  });
+
+  // Strategy panels
+  const strategySelect = document.getElementById('strategy-select');
+  function updateStrategyPanel() {
+    document.querySelectorAll('[id^="panel-bow"],[id^="panel-tfidf"],[id^="panel-word2vec"]').forEach(p => {
+      p.classList.remove('visible');
+    });
+    const panel = document.getElementById('panel-' + strategySelect.value);
+    if (panel) panel.classList.add('visible');
+  }
+  strategySelect.addEventListener('change', updateStrategyPanel);
+  updateStrategyPanel();
+
+  // Model panels
+  const modelSelect = document.getElementById('model-select');
+  function updateModelPanel() {
+    document.querySelectorAll('[id^="panel-logistic"]').forEach(p => p.classList.remove('visible'));
+    const panel = document.getElementById('panel-' + modelSelect.value);
+    if (panel) panel.classList.add('visible');
+  }
+  modelSelect.addEventListener('change', updateModelPanel);
+
+  // Run
+  document.getElementById('run-btn').addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) { showError('Selecione um arquivo antes de executar.'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Only collect inputs from visible panels (avoids duplicate names from hidden panels)
+    function isInsideHiddenPanel(el) {
+      const panel = el.closest('.panel');
+      return panel && !panel.classList.contains('visible');
+    }
+
+    document.querySelectorAll('select[name], input[name]').forEach(el => {
+      if (isInsideHiddenPanel(el)) return;
+      if (el.type === 'checkbox') {
+        if (el.closest('.step-btn')) {
+          if (el.checked) formData.append(el.name, 'on');
+        } else {
+          formData.append(el.name, el.checked ? el.value : 'false');
+        }
+      } else if (el.type === 'file') {
+        // skip
+      } else {
+        formData.append(el.name, el.value);
+      }
+    });
+
+    setLoading(true);
+    hideError();
+    document.getElementById('results').style.display = 'none';
+
+    try {
+      const res = await fetch('/run', { method: 'POST', body: formData });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch {
+        showError('Erro no servidor: ' + text.slice(0, 400));
+        return;
+      }
+      if (!res.ok) { showError(data.error || 'Erro desconhecido.'); return; }
+      showResults(data);
+    } catch (e) {
+      showError('Erro de conexão: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function setLoading(on) {
+    document.getElementById('run-btn').disabled = on;
+    document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+
+  function showResults(data) {
+    const grid = document.getElementById('metrics-grid');
+    grid.innerHTML = '';
+    if (data.metrics) {
+      const labels = { accuracy: 'Acurácia', f1: 'F1', precision: 'Precisão', recall: 'Recall' };
+      Object.entries(data.metrics).forEach(([k, v]) => {
+        grid.innerHTML += `<div class="metric"><div class="val">${(v * 100).toFixed(1)}%</div><div class="lbl">${labels[k] ?? k}</div></div>`;
+      });
+    }
+
+    const dlBtn = document.getElementById('download-btn');
+    const bytes = Uint8Array.from(atob(data.file_b64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    dlBtn.href = URL.createObjectURL(blob);
+    dlBtn.download = data.filename;
+
+    document.getElementById('results').style.display = 'block';
+  }
+</script>
+</body>
+</html>

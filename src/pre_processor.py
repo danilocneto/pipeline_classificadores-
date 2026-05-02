@@ -1,6 +1,3 @@
-import pandas as pd
-import config as config
-
 import spacy
 
 import unicodedata
@@ -92,12 +89,4 @@ class BasicTextPreprocessor:
         tokens = self.remove_noise_and_stopwords(tokens)
         return ' '.join(tokens)
     
-df = pd.read_excel('../data/NPS_COMENTÁRIOS.xlsx')
-
-pre_processor = BasicTextPreprocessor(config.config_pre_processing)
-df['texto_processado'] = df['Comentários'].apply(
-    lambda x: pre_processor.pre_process(x) if pd.notna(x) else ""
-)
-
-df.to_excel('../data/NPS_COMENTA_RIOS_PROCESSADO.xlsx', index=False)
 
