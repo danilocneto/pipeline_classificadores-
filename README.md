@@ -73,7 +73,7 @@ http://127.0.0.1:5000
 
 ## Como usar
 
-1. **Arquivo** — selecione ou arraste uma planilha `.xlsx`. Ela deve conter as colunas `Comentários` (texto a classificar) e `Classificação` (rótulos para treino).
+1. **Arquivo** — selecione ou arraste uma planilha `.xlsx`. O teste pode ser feito com a planilha `NPS_COMENTÁRIOS.xlsx` disponibilizada pela Zamp (já presente na pasta `data/`), ou com qualquer outra planilha que possua as colunas `Comentários` (texto a classificar) e `Classificação` (rótulos para treino).
 2. **Etapas do pipeline** — ative ou desative clicando nas pills: Pré-processamento, Vetorização, Classificação.
 3. **Configure cada etapa** — os parâmetros aparecem abaixo de cada etapa ativa.
 4. **Executar pipeline** — clique no botão. Ao terminar, as métricas (Acurácia, F1, Precisão, Recall) são exibidas e um botão de download do resultado aparece.
