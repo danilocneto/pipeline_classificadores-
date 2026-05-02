@@ -33,7 +33,8 @@ pip install flask pandas scikit-learn spacy nltk gensim lightgbm openpyxl numpy
 ```
 
 ### 4. Instale o modelo de português do spaCy
-Unsafe attempt to load URL http://localhost:5000/ from frame with URL chrome-error://chromewebdata/. Domains, protocols and ports must match.
+
+
 ```bash
 python -m spacy download pt_core_news_sm
 ```
